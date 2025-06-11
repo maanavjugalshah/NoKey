@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Door Opener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .app-header {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .app-title {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .app-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .connection-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #2ed573;
+        }
+
+        .status-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:active:before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ed573, #17c0eb);
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 213, 115, 0.4);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            color: #7f8c8d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .door-control {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .door-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 36px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .door-status {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .open-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            font-size: 18px;
+            padding: 20px;
+            border-radius: 15px;
+            border: none;
+            width: 100%;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .open-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+        }
+
+        .open-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .open-btn:disabled {
+            background: #bdc3c7;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .activity-log {
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 350px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-size: 14px;
+            color: #34495e;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* iOS-style toggle switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 10px 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span>9:41</span>
+        <span>Door Opener</span>
+        <span>🔋 100%</span>
+    </div>
+
+    <!-- App Header -->
+    <div class="app-header">
+        <div class="app-title">🚪 Smart Door</div>
+        <div class="app-subtitle">Bluetooth Door Controller</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Connection Card -->
+        <div class="connection-card">
+            <div class="connection-status">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Disconnected</span>
+            </div>
+            
+            <button class="btn btn-primary" id="connectBtn">
+                📡 Connect to Door
+            </button>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span style="font-size: 14px; color: #7f8c8d;">Auto-reconnect</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoReconnect" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Door Control -->
+        <div class="door-control" id="doorControl" style="opacity: 0.5;">
+            <div class="door-icon">🚪</div>
+            <div class="door-status" id="doorStatus">Ready to Open</div>
+            <button class="open-btn" id="openBtn" disabled>
+                🔓 OPEN DOOR
+            </button>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="activity-log">
+            <div class="log-title">📋 Activity Log</div>
+            <div id="logContainer">
+                <div class="log-entry">
+                    <div>App started</div>
+                    <div class="log-time" id="startTime"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let device = null;
+        let characteristic = null;
+        let isConnected = false;
+        let autoReconnectEnabled = true;
+
+        const connectBtn = document.getElementById('connectBtn');
+        const openBtn = document.getElementById('openBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const doorControl = document.getElementById('doorControl');
+        const doorStatus = document.getElementById('doorStatus');
+        const logContainer = document.getElementById('logContainer');
+        const autoReconnectToggle = document.getElementById('autoReconnect');
+
+        // Initialize
+        document.getElementById('startTime').textContent = new Date().toLocaleTimeString();
+
+        // Auto-reconnect toggle
+        autoReconnectToggle.addEventListener('change', (e) => {
+            autoReconnectEnabled = e.target.checked;
+            addLog(`Auto-reconnect ${autoReconnectEnabled ? 'enabled' : 'disabled'}`);
+        });
+
+        // Connect button
+        connectBtn.addEventListener('click', async () => {
+            if (isConnected) {
+                disconnect();
+            } else {
+                await connect();
+            }
+        });
+
+        // Open door button
+        openBtn.addEventListener('click', async () => {
+            await openDoor();
+        });
+
+        async function connect() {
+            try {
+                connectBtn.textContent = '🔍 Searching...';
+                connectBtn.disabled = true;
+
+                if (!navigator.bluetooth) {
+                    throw new Error('Bluetooth not supported');
+                }
+
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'ESP32-DoorOpener' }],
+                    optionalServices: ['12345678-1234-1234-1234-1234567890ab']
+                });
+
+                addLog('Device found, connecting...');
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('12345678-1234-1234-1234-1234567890ab');
+                characteristic = await service.getCharacteristic('abcdefab-1234-1234-1234-abcdefabcdef');
+
+                // Listen for disconnection
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+
+                updateConnectionStatus(true);
+                addLog('✅ Connected successfully');
+
+            } catch (error) {
+                console.error('Connection failed:', error);
+                addLog(`❌ Connection failed: ${error.message}`);
+                updateConnectionStatus(false);
+            }
+        }
+
+        function disconnect() {
+            if (device && device.gatt.connected) {
+                device.gatt.disconnect();
+            }
+            updateConnectionStatus(false);
+        }
+
+        function onDisconnected() {
+            updateConnectionStatus(false);
+            addLog('📡 Device disconnected');
+            
+            if (autoReconnectEnabled) {
+                addLog('🔄 Auto-reconnecting in 3 seconds...');
+                setTimeout(connect, 3000);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            
+            if (connected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected';
+                connectBtn.textContent = '🔌 Disconnect';
+                connectBtn.className = 'btn btn-success';
+                doorControl.style.opacity = '1';
+                openBtn.disabled = false;
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.textContent = 'Disconnected';
+                connectBtn.textContent = '📡 Connect to Door';
+                connectBtn.className = 'btn btn-primary';
+                doorControl.style.opacity = '0.5';
+                openBtn.disabled = true;
+                doorStatus.textContent = 'Not Connected';
+            }
+            
+            connectBtn.disabled = false;
+        }
+
+        async function openDoor() {
+            if (!characteristic) {
+                addLog('❌ Not connected');
+                return;
+            }
+
+            try {
+                openBtn.disabled = true;
+                openBtn.textContent = '🔓 Opening...';
+                doorStatus.textContent = 'Opening Door...';
+
+                const encoder = new TextEncoder();
+                await characteristic.writeValue(encoder.encode('open'));
+
+                addLog('🚪 Door opened successfully');
+                doorStatus.textContent = 'Door Opened!';
+
+                // Vibrate if supported
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100]);
+                }
+
+                setTimeout(() => {
+                    doorStatus.textContent = 'Ready to Open';
+                    openBtn.textContent = '🔓 OPEN DOOR';
+                    openBtn.disabled = false;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Open door failed:', error);
+                addLog(`❌ Failed to open door: ${error.message}`);
+                doorStatus.textContent = 'Error Opening Door';
+                openBtn.textContent = '🔓 OPEN DOOR';
+                openBtn.disabled = false;
+                
+                // Shake animation on error
+                doorControl.classList.add('shake');
+                setTimeout(() => doorControl.classList.remove('shake'), 500);
+            }
+        }
+
+        function addLog(message) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div>${message}</div>
+                <div class="log-time">${new Date().toLocaleTimeString()}</div>
+            `;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // Keep only last 10 entries
+            while (logContainer.children.length > 11) { // +1 for title
+                logContainer.removeChild(logContainer.children[1]);
+            }
+        }
+
+        // Add to home screen prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            addLog('💡 Tip: Add to home screen for app-like experience');
+        });
+    </script>
+</body>
+</html>
